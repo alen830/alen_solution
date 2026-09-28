@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'register_pages.dart';
 import 'home_pages.dart'; // Sesuaikan jika halaman setelah login adalah HomePage
 
+import 'package:alen_solution/pages/home_pages.dart';
+import 'package:alen_solution/pages/daftar_hadir_pages.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -200,8 +203,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
-
-class HomePage {
-  const new();
 }

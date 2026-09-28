@@ -1,3 +1,7 @@
+import 'package:alen_solution/pages/daftar_hadir_pages.dart';
+import 'package:alen_solution/pages/home_pages.dart';
+import 'package:alen_solution/pages/login_pages.dart';
+import 'package:alen_solution/pages/profile_pages.dart';
 import 'package:alen_solution/pages/register_pages.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +17,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
       home: const RegisterPage(),
     );
   }

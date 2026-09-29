@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-// Import file halaman sesuai struktur folder Anda:
 import 'daftar_hadir_pages.dart';
-import 'register_pages.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,244 +10,194 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Variabel penampung nilai waktu absen
-  String _jamMasuk = '--:--';
-  String _jamKeluar = '--:--';
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _jabatanController = TextEditingController();
+  String _statusTerpilih = 'Tepat Waktu';
 
-  // Fungsi untuk mencatat jam masuk
-  void _absenMasuk() {
-    setState(() {
-      _jamMasuk = DateFormat('HH:mm').format(DateTime.now());
-    });
+  void _simpanAbsen() {
+    if (_formKey.currentState!.validate()) {
+      final now = DateTime.now();
+      final String jamFormatted =
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Absen masuk berhasil dicatat: $_jamMasuk'),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      // Simpan data ke static list DaftarHadirPage
+      DaftarHadirPage.listHadirGlobal.insert(0, {
+        'nama': _namaController.text.trim(),
+        'jabatan': _jabatanController.text.trim(),
+        'jam': jamFormatted,
+        'status': _statusTerpilih,
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Presensi berhasil dicatat!'),
+          backgroundColor: Colors.green.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Berpindah ke halaman DaftarHadirPage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DaftarHadirPage()),
+      );
+    }
   }
 
-  // Fungsi untuk mencatat jam keluar
-  void _absenKeluar() {
-    setState(() {
-      _jamKeluar = DateFormat('HH:mm').format(DateTime.now());
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Absen keluar berhasil dicatat: $_jamKeluar'),
-        backgroundColor: Colors.redAccent,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _jabatanController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FA),
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text(
-          'Dashboard Absensi',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+          'ABSEN PPKD',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          children: [
-            // Row Jam Masuk & Jam Keluar Card
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTimeCard(
-                    title: 'Jam Masuk',
-                    time: _jamMasuk, // Menggunakan state _jamMasuk
-                    icon: Icons.login_rounded,
-                    iconColor: Colors.green,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTimeCard(
-                    title: 'Jam Keluar',
-                    time: _jamKeluar, // Menggunakan state _jamKeluar
-                    icon: Icons.logout_rounded,
-                    iconColor: Colors.redAccent,
-                  ),
-                ),
-              ],
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(height: 24),
-
-            // Tombol Aksi Absen
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _absenMasuk,
-                    icon: const Icon(Icons.check_circle_outline, size: 20),
-                    label: const Text(
-                      'ABSEN MASUK',
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.assignment_turned_in_rounded,
+                        size: 60,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Silakan Isi Absen Anda',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        color: Colors.black87,
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _absenKeluar,
-                    icon: const Icon(Icons.cancel_outlined, size: 20),
-                    label: const Text(
-                      'ABSEN KELUAR',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-            // Divider Pemisah
-            const Divider(color: Colors.black12, thickness: 1),
-            const SizedBox(height: 16),
+                    // Input Nama
+                    TextFormField(
+                      controller: _namaController,
+                      decoration: InputDecoration(
+                        labelText: 'Nama Lengkap',
+                        prefixIcon: const Icon(Icons.person_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Nama wajib diisi'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
 
-            // Tombol Navigasi: Daftar Akun Baru (Register)
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const RegisterPage()),
-                );
-              },
-              icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-              label: const Text(
-                'Daftar Akun Baru (Register)',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.blueAccent,
-                minimumSize: const Size(double.infinity, 50),
-                side: const BorderSide(color: Colors.blueAccent, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                    // Input Jabatan
+                    TextFormField(
+                      controller: _jabatanController,
+                      decoration: InputDecoration(
+                        labelText: 'Jabatan / Divisi',
+                        prefixIcon: const Icon(Icons.work_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Jabatan wajib diisi'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Pilihan Status
+                    DropdownButtonFormField<String>(
+                      value: _statusTerpilih,
+                      decoration: InputDecoration(
+                        labelText: 'Keterangan Hadir',
+                        prefixIcon: const Icon(Icons.access_time),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Tepat Waktu',
+                          child: Text(
+                            'Tepat Waktu',
+                            style: TextStyle(color: Colors.green),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Terlambat',
+                          child: Text(
+                            'Terlambat',
+                            style: TextStyle(color: Colors.orange),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null)
+                          setState(() => _statusTerpilih = value);
+                      },
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Tombol Submit
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text('Kirim Kehadiran'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onPressed: _simpanAbsen,
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-
-            // Tombol Navigasi: Daftar Hadir
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DaftarHadirPage(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.assignment_outlined, size: 20),
-              label: const Text(
-                'Lihat Daftar Hadir',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.blueGrey.shade800,
-                minimumSize: const Size(double.infinity, 50),
-                elevation: 1,
-                side: BorderSide(color: Colors.grey.shade300),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  // Widget Pembantu Card Jam
-  Widget _buildTimeCard({
-    required String title,
-    required String time,
-    required IconData icon,
-    required Color iconColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 26),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            time,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-              color: Colors.black87,
-            ),
-          ),
-        ],
       ),
     );
   }

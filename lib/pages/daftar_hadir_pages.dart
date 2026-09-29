@@ -1,184 +1,128 @@
 import 'package:flutter/material.dart';
-// Import file login dan home untuk keperluan navigasi
-import 'package:alen_solution/pages/login_pages.dart';
-import 'package:alen_solution/pages/home_pages.dart';
 
-class DaftarHadirPage extends StatelessWidget {
+import 'home_pages.dart';
+
+class DaftarHadirPage extends StatefulWidget {
   const DaftarHadirPage({super.key});
 
+  // Variabel statis untuk menampung riwayat presensi yang dikirim dari HomePage
+  static List<Map<String, String>> listHadirGlobal = [];
+
+  @override
+  State<DaftarHadirPage> createState() => _DaftarHadirPageState();
+}
+
+class _DaftarHadirPageState extends State<DaftarHadirPage> {
   @override
   Widget build(BuildContext context) {
-    // Contoh data riwayat daftar hadir
-    final List<Map<String, String>> riwayatHadir = [
-      {
-        'tanggal': '28 September 2026',
-        'masuk': '09:04 WIB',
-        'keluar': '17:00 WIB',
-        'status': 'Hadir',
-      },
-      {
-        'tanggal': '27 September 2026',
-        'masuk': '08:55 WIB',
-        'keluar': '17:05 WIB',
-        'status': 'Hadir',
-      },
-      {
-        'tanggal': '26 September 2026',
-        'masuk': '09:00 WIB',
-        'keluar': '17:01 WIB',
-        'status': 'Hadir',
-      },
-    ];
-
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Daftar Hadir'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Kembali ke Home Page (atau halaman sebelumnya)
-            Navigator.pop(context);
-          },
+        title: const Text(
+          'Daftar Kehadiran',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () {
-              // Menghapus semua tumpukan halaman dan kembali ke LoginPage
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Riwayat Kehadiran',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.builder(
-                itemCount: riwayatHadir.length,
-                itemBuilder: (context, index) {
-                  final item = riwayatHadir[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Isi Absen Baru'),
+      ),
+      body: DaftarHadirPage.listHadirGlobal.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inbox_outlined, size: 70, color: Colors.grey),
+                  SizedBox(height: 12),
+                  Text(
+                    'Belum ada data kehadiran',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: DaftarHadirPage.listHadirGlobal.length,
+              itemBuilder: (context, index) {
+                final data = DaftarHadirPage.listHadirGlobal[index];
+                final isTepatWaktu = data['status'] == 'Tepat Waktu';
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    elevation: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['tanggal']!,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.login,
-                                    size: 16,
-                                    color: Colors.green,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Masuk: ${item['masuk']}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Icon(
-                                    Icons.logout,
-                                    size: 16,
-                                    color: Colors.orange,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Keluar: ${item['keluar']}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item['status']!,
-                              style: TextStyle(
-                                color: Colors.green.shade800,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.deepPurple.shade100,
+                      child: Text(
+                        data['nama']!.isNotEmpty
+                            ? data['nama']![0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-
-            // Tombol Opsional untuk Kembali ke Dashboard
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    title: Text(
+                      data['nama'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text('Divisi: ${data['jabatan'] ?? '-'}'),
+                        Text(
+                          'Jam: ${data['jam'] ?? '-'}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    trailing: Chip(
+                      label: Text(
+                        data['status'] ?? '',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isTepatWaktu
+                              ? Colors.green.shade800
+                              : Colors.red.shade800,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      backgroundColor: isTepatWaktu
+                          ? Colors.green.shade50
+                          : Colors.red.shade50,
+                      side: BorderSide(
+                        color: isTepatWaktu
+                            ? Colors.green.shade200
+                            : Colors.red.shade200,
+                      ),
+                    ),
                   ),
-                ),
-                onPressed: () {
-                  // Kembali ke HomePage
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.home, color: Colors.white),
-                label: const Text(
-                  'Kembali ke Dashboard',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
+                );
+              },
             ),
-          ],
-        ),
-      ),
     );
   }
 }

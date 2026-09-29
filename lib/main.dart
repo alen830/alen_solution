@@ -1,7 +1,6 @@
-import 'package:alen_solution/pages/daftar_hadir_pages.dart';
 import 'package:alen_solution/pages/home_pages.dart';
 import 'package:alen_solution/pages/login_pages.dart';
-import 'package:alen_solution/pages/profile_pages.dart';
+
 import 'package:alen_solution/pages/register_pages.dart';
 import 'package:flutter/material.dart';
 

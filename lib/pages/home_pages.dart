@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'daftar_hadir_pages.dart';
+import 'daftar_hadir_page.dart'; // Navigasi ke riwayat/daftar hadir
+import 'login_pages.dart'; // Navigasi jika logout
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,193 +11,300 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _jabatanController = TextEditingController();
-  String _statusTerpilih = 'Tepat Waktu';
+  // Data simulasi status presensi
+  String checkInTime = "--:--";
+  String checkOutTime = "--:--";
 
-  void _simpanAbsen() {
-    if (_formKey.currentState!.validate()) {
+  void _handlePresensi() {
+    setState(() {
       final now = DateTime.now();
-      final String jamFormatted =
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} WIB';
+      final formattedTime =
+          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
 
-      // Simpan data ke static list DaftarHadirPage
-      DaftarHadirPage.listHadirGlobal.insert(0, {
-        'nama': _namaController.text.trim(),
-        'jabatan': _jabatanController.text.trim(),
-        'jam': jamFormatted,
-        'status': _statusTerpilih,
-      });
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Presensi berhasil dicatat!'),
-          backgroundColor: Colors.green.shade700,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      // Berpindah ke halaman DaftarHadirPage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const DaftarHadirPage()),
-      );
-    }
+      if (checkInTime == "--:--") {
+        checkInTime = formattedTime;
+        _showSuccessSnackbar(
+          "Presensi masuk berhasil dicatat ($formattedTime)",
+        );
+      } else if (checkOutTime == "--:--") {
+        checkOutTime = formattedTime;
+        _showSuccessSnackbar(
+          "Presensi keluar berhasil dicatat ($formattedTime)",
+        );
+      } else {
+        _showSuccessSnackbar("Anda sudah menyelesaikan presensi hari ini");
+      }
+    });
   }
 
-  @override
-  void dispose() {
-    _namaController.dispose();
-    _jabatanController.dispose();
-    super.dispose();
+  void _showSuccessSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF4F6EF7),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: const Text(
-          'ABSEN PPKD',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Selamat Datang 👋",
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            Text(
+              "User Demo",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
+            tooltip: 'Logout',
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
-        child: Center(
-          child: Card(
-            elevation: 3,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Kartu Ringkasan Hari Ini
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4F6EF7), Color(0xFF6C8CFF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x334F6EF7),
+                    blurRadius: 15,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    "Presensi Hari Ini",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildTimeCard(
+                        title: "Masuk",
+                        time: checkInTime,
+                        icon: Icons.login_rounded,
+                      ),
+                      Container(width: 1, height: 45, color: Colors.white24),
+                      _buildTimeCard(
+                        title: "Keluar",
+                        time: checkOutTime,
+                        icon: Icons.logout_rounded,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.assignment_turned_in_rounded,
-                        size: 60,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Silakan Isi Absen Anda',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-                    // Input Nama
-                    TextFormField(
-                      controller: _namaController,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Lengkap',
-                        prefixIcon: const Icon(Icons.person_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Nama wajib diisi'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Input Jabatan
-                    TextFormField(
-                      controller: _jabatanController,
-                      decoration: InputDecoration(
-                        labelText: 'Jabatan / Divisi',
-                        prefixIcon: const Icon(Icons.work_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Jabatan wajib diisi'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Pilihan Status
-                    DropdownButtonFormField<String>(
-                      value: _statusTerpilih,
-                      decoration: InputDecoration(
-                        labelText: 'Keterangan Hadir',
-                        prefixIcon: const Icon(Icons.access_time),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Tepat Waktu',
-                          child: Text(
-                            'Tepat Waktu',
-                            style: TextStyle(color: Colors.green),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Terlambat',
-                          child: Text(
-                            'Terlambat',
-                            style: TextStyle(color: Colors.orange),
-                          ),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null)
-                          setState(() => _statusTerpilih = value);
-                      },
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Tombol Submit
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.send_rounded),
-                      label: const Text('Kirim Kehadiran'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.deepPurple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onPressed: _simpanAbsen,
-                    ),
-                  ],
+            // Tombol Utama: Catat Presensi
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _handlePresensi,
+                icon: const Icon(
+                  Icons.fingerprint_rounded,
+                  size: 26,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  "Catat Kehadiran Sekarang",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F6EF7),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: 30),
+
+            // Menu Pintasan / Layanan
+            const Text(
+              "Menu Cepat",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMenuCard(
+                    title: "Daftar Hadir",
+                    subtitle: "Riwayat presensi",
+                    icon: Icons.calendar_month_rounded,
+                    color: const Color(0xFF0EA5E9),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DaftarHadirPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildMenuCard(
+                    title: "Lokasi Kantor",
+                    subtitle: "Cek radius GPS",
+                    icon: Icons.location_on_rounded,
+                    color: const Color(0xFF10B981),
+                    onTap: () {
+                      // Integrasi cek titik GPS / geolocator
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Lokasi berada dalam radius'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeCard({
+    required String title,
+    required String time,
+    required IconData icon,
+  }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: Colors.white70, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          time,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+            ),
+          ],
         ),
       ),
     );

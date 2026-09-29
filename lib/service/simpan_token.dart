@@ -10,6 +10,7 @@ class SimpanToken {
 
   static Future<String?> getToken() async {
     final pref = await SharedPreferences.getInstance();
+    return pref.getString('autentikasi_token');
   }
 
   //hapus token ketika logout

@@ -1,14 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-// Import file daftar hadir dan register sesuai struktur folder Anda:
+// Import file halaman sesuai struktur folder Anda:
 import 'daftar_hadir_pages.dart';
 import 'register_pages.dart';
 
-import 'package:alen_solution/pages/daftar_hadir_pages.dart';
-import 'package:intl/intl.dart';
-
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Variabel penampung nilai waktu absen
+  String _jamMasuk = '--:--';
+  String _jamKeluar = '--:--';
+
+  // Fungsi untuk mencatat jam masuk
+  void _absenMasuk() {
+    setState(() {
+      _jamMasuk = DateFormat('HH:mm').format(DateTime.now());
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Absen masuk berhasil dicatat: $_jamMasuk'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Fungsi untuk mencatat jam keluar
+  void _absenKeluar() {
+    setState(() {
+      _jamKeluar = DateFormat('HH:mm').format(DateTime.now());
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Absen keluar berhasil dicatat: $_jamKeluar'),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +71,7 @@ class HomePage extends StatelessWidget {
                 Expanded(
                   child: _buildTimeCard(
                     title: 'Jam Masuk',
-                    time: '--:--',
+                    time: _jamMasuk, // Menggunakan state _jamMasuk
                     icon: Icons.login_rounded,
                     iconColor: Colors.green,
                   ),
@@ -43,7 +80,7 @@ class HomePage extends StatelessWidget {
                 Expanded(
                   child: _buildTimeCard(
                     title: 'Jam Keluar',
-                    time: '--:--',
+                    time: _jamKeluar, // Menggunakan state _jamKeluar
                     icon: Icons.logout_rounded,
                     iconColor: Colors.redAccent,
                   ),
@@ -57,9 +94,7 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Logika Absen Masuk
-                    },
+                    onPressed: _absenMasuk,
                     icon: const Icon(Icons.check_circle_outline, size: 20),
                     label: const Text(
                       'ABSEN MASUK',
@@ -82,9 +117,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Logika Absen Keluar
-                    },
+                    onPressed: _absenKeluar,
                     icon: const Icon(Icons.cancel_outlined, size: 20),
                     label: const Text(
                       'ABSEN KELUAR',

@@ -6,6 +6,8 @@ import 'home_pages.dart'; // Sesuaikan jika halaman setelah login adalah HomePag
 import 'package:alen_solution/pages/home_pages.dart';
 import 'package:alen_solution/pages/daftar_hadir_pages.dart';
 
+import 'login_pages.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 

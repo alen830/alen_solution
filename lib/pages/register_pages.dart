@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:alen_solution/model/presensi_model.dart';
 
-import 'login_pages.dart'; // Sesuaikan lokasi file LoginPage
+import 'login_pages.dart'; // Sesuaikan lokasi file LoginPage jika berbeda
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -24,12 +25,78 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  // Fungsi untuk mencatat kehadiran otomatis
+  void _simpanDataKehadiran(String namaUser) {
+    final sekarang = DateTime.now();
+
+    // Format daftar nama hari dan bulan dalam bahasa Indonesia
+    const daftarHari = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
+    const daftarBulan = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    final namaHari = daftarHari[sekarang.weekday - 1];
+    final namaBulan = daftarBulan[sekarang.month - 1];
+    final tanggalLengkap =
+        '$namaHari, ${sekarang.day} $namaBulan ${sekarang.year}';
+
+    // Batas tepat waktu misal jam 08:00
+    final statusWaktu =
+        (sekarang.hour < 8 || (sekarang.hour == 8 && sekarang.minute == 0))
+        ? 'Tepat Waktu'
+        : 'Lewat';
+
+    final dataBaru = Presensi(
+      nama: namaUser,
+      tanggal: tanggalLengkap,
+      jamMasuk:
+          '${sekarang.hour.toString().padLeft(2, '0')}:${sekarang.minute.toString().padLeft(2, '0')}',
+      jamKeluar: '-',
+      lokasi: 'Pejabat Pusat (GPS Sah)',
+      status: statusWaktu,
+    );
+
+    // Simpan ke list data presensi
+    PresensiRepository.tambahPresensi(dataBaru);
+  }
+
   void _handleRegister() {
     if (_formKey.currentState!.validate()) {
-      // Jalankan logika API register di sini
-      ScaffoldMessenger.of(
+      // 1. Simpan data presensi otomatis menggunakan nama yang didaftarkan
+      _simpanDataKehadiran(_nameController.text.trim());
+
+      // 2. Berikan notifikasi sukses
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pendaftaran berhasil & Kehadiran tercatat otomatis!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // 3. Arahkan pengguna ke halaman Login atau Home
+      Navigator.pushReplacement(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Memproses Pendaftaran...')));
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
     }
   }
 
@@ -50,8 +117,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   Container(
                     width: 70,
                     height: 70,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8EEFD),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8EEFD),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -83,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _nameController,
                     hintText: 'Nama Lengkap',
                     icon: Icons.person_outline_rounded,
-                    validator: (val) => val == null || val.isEmpty
+                    validator: (val) => val == null || val.trim().isEmpty
                         ? 'Nama tidak boleh kosong'
                         : null,
                   ),
@@ -96,10 +163,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     icon: Icons.mail_outline_rounded,
                     keyboardType: TextInputType.emailAddress,
                     validator: (val) {
-                      if (val == null || val.isEmpty)
+                      if (val == null || val.trim().isEmpty) {
                         return 'Email tidak boleh kosong';
+                      }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(val)) {
+                          .hasMatch(val.trim())) {
                         return 'Format email tidak valid';
                       }
                       return null;
@@ -202,10 +270,10 @@ class _RegisterPageState extends State<RegisterPage> {
     String? Function(String?)? validator,
   }) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        boxShadow: [
           BoxShadow(
             color: Color(0x08000000),
             blurRadius: 10,

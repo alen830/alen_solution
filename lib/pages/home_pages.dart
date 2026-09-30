@@ -1,7 +1,9 @@
+import 'package:alen_solution/model/presensi_model.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
-import 'daftar_hadir_page.dart'; // Navigasi ke riwayat/daftar hadir
-import 'login_pages.dart'; // Navigasi jika logout
+import 'daftar_hadir_page.dart';
+import 'login_pages.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,33 +13,217 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Data simulasi status presensi
   String checkInTime = "--:--";
   String checkOutTime = "--:--";
+  String lastStatus = "Belum Presensi";
+  String currentLocation = "Lokasi belum dicatat";
+  bool isLoading = false;
 
-  void _handlePresensi() {
-    setState(() {
+  // Fungsi pengambil koordinat GPS dengan proteksi timeout & fallback
+  Future<Position?> _determinePosition() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showSnackbar("Layanan lokasi (GPS) nonaktif. Harap aktifkan GPS.");
+        return null;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _showSnackbar("Izin akses lokasi ditolak oleh pengguna.");
+          return null;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        _showSnackbar(
+          "Izin lokasi ditolak permanen. Buka pengaturan aplikasi.",
+        );
+        return null;
+      }
+
+      // Coba ambil posisi aktif dengan batas waktu 7 detik
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 7),
+        ),
+      );
+    } catch (e) {
+      // Jika timeout di emulator, ambil posisi terakhir yang terekam
+      try {
+        Position? lastKnown = await Geolocator.getLastKnownPosition();
+        if (lastKnown != null) {
+          return lastKnown;
+        }
+      } catch (_) {}
+
+      // Fallback koordinat demo jika emulator tidak mengirim sinyal GPS sama sekali
+      _showSnackbar(
+        "GPS lambat merespons, menggunakan titik koordinat dummy emulator.",
+      );
+      return Position(
+        latitude: -6.2088,
+        longitude: 106.8456,
+        timestamp: DateTime.now(),
+        accuracy: 10.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+      );
+    }
+  }
+
+  // Modal dialog pemilihan status dan input keterangan
+  Future<void> _showPresensiDialog() async {
+    String selectedType = "Hadir Masuk";
+    final notesController = TextEditingController();
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Input Presensi",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    decoration: InputDecoration(
+                      labelText: "Jenis Kehadiran",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: "Hadir Masuk",
+                        child: Text("Hadir (Masuk)"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Hadir Pulang",
+                        child: Text("Hadir (Pulang)"),
+                      ),
+                      DropdownMenuItem(value: "Izin", child: Text("Izin")),
+                      DropdownMenuItem(value: "Sakit", child: Text("Sakit")),
+                      DropdownMenuItem(
+                        value: "Tugas Luar",
+                        child: Text("Tugas Luar"),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setModalState(() {
+                        selectedType = val!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: notesController,
+                    decoration: InputDecoration(
+                      labelText: "Keterangan Tambahan (Opsional)",
+                      hintText: "Contoh: Hadir di kantor / WFH",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4F6EF7),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _submitPresensi(selectedType, notesController.text);
+                      },
+                      child: const Text(
+                        "Konfirmasi & Catat Lokasi",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Eksekusi pencatatan presensi
+  Future<void> _submitPresensi(String type, String note) async {
+    setState(() => isLoading = true);
+
+    try {
+      Position? pos = await _determinePosition();
       final now = DateTime.now();
       final formattedTime =
           "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
 
-      if (checkInTime == "--:--") {
-        checkInTime = formattedTime;
-        _showSuccessSnackbar(
-          "Presensi masuk berhasil dicatat ($formattedTime)",
-        );
-      } else if (checkOutTime == "--:--") {
-        checkOutTime = formattedTime;
-        _showSuccessSnackbar(
-          "Presensi keluar berhasil dicatat ($formattedTime)",
-        );
-      } else {
-        _showSuccessSnackbar("Anda sudah menyelesaikan presensi hari ini");
+      if (pos != null) {
+        setState(() {
+          currentLocation =
+              "${pos.latitude.toStringAsFixed(5)}, ${pos.longitude.toStringAsFixed(5)}";
+          lastStatus = type + (note.trim().isNotEmpty ? " ($note)" : "");
+
+          if (type == "Hadir Masuk") {
+            checkInTime = formattedTime;
+          } else if (type == "Hadir Pulang") {
+            checkOutTime = formattedTime;
+          }
+        });
+        _showSnackbar("Berhasil mencatat $type ($formattedTime)");
       }
-    });
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
   }
 
-  void _showSuccessSnackbar(String message) {
+  void _showSnackbar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -63,7 +249,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             Text(
-              "User Demo",
+              "ABSEN PPKD",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -91,7 +277,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kartu Ringkasan Hari Ini
+            // Kartu Ringkasan Status & Waktu Presensi
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -112,13 +298,14 @@ class _HomePageState extends State<HomePage> {
               ),
               child: Column(
                 children: [
-                  const Text(
-                    "Presensi Hari Ini",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                  Text(
+                    "Status: $lastStatus",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -137,25 +324,66 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.pin_drop,
+                          size: 14,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            currentLocation,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // Tombol Utama: Catat Presensi
+            // Tombol Utama Catat Presensi
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: _handlePresensi,
-                icon: const Icon(
-                  Icons.fingerprint_rounded,
-                  size: 26,
-                  color: Colors.white,
-                ),
-                label: const Text(
-                  "Catat Kehadiran Sekarang",
-                  style: TextStyle(
+                onPressed: isLoading ? null : _showPresensiDialog,
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.fingerprint_rounded,
+                        size: 26,
+                        color: Colors.white,
+                      ),
+                label: Text(
+                  isLoading ? "Mengambil Lokasi..." : "Pilih & Catat Kehadiran",
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -172,7 +400,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 30),
 
-            // Menu Pintasan / Layanan
+            // Menu Cepat
             const Text(
               "Menu Cepat",
               style: TextStyle(
@@ -208,13 +436,13 @@ class _HomePageState extends State<HomePage> {
                     subtitle: "Cek radius GPS",
                     icon: Icons.location_on_rounded,
                     color: const Color(0xFF10B981),
-                    onTap: () {
-                      // Integrasi cek titik GPS / geolocator
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Lokasi berada dalam radius'),
-                        ),
-                      );
+                    onTap: () async {
+                      final pos = await _determinePosition();
+                      if (pos != null) {
+                        _showSnackbar(
+                          "Koordinat: ${pos.latitude}, ${pos.longitude}",
+                        );
+                      }
                     },
                   ),
                 ),

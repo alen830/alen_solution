@@ -1,90 +1,177 @@
 import 'package:flutter/material.dart';
 
-// ==========================================
-// 1. MODEL DATA PRESENSI
-// ==========================================
-class Presensi {
+// Model data kehadiran
+class PresensiItem {
   final String nama;
   final String tanggal;
+  final String jam;
   final String status;
-  final String jamMasuk;
-  String jamKeluar; // Bukan final agar bisa diisi saat Check Out
-  final String lokasi;
 
-  Presensi({
-    required this.nama,
+  PresensiItem({
+    this.nama = '',
     required this.tanggal,
+    required this.jam,
     required this.status,
-    required this.jamMasuk,
-    this.jamKeluar = '--:--',
-    required this.lokasi,
   });
+
+  bool get isLate => status.toLowerCase() == 'terlambat';
 }
 
-// ==========================================
-// 2. DATA REPOSITORY & FUNGSI OTOMATIS
-// ==========================================
-class PresensiRepository {
-  // List data presensi (bisa bertambah otomatis)
-  static List<Presensi> daftarKehadiran = [
-    Presensi(
-      nama: 'Budi Santoso',
-      tanggal: 'Senin, 30 Sep 2026',
-      status: 'Tepat Waktu',
-      jamMasuk: '07:55',
-      jamKeluar: '17:05',
-      lokasi: 'Kantor Pusat',
-    ),
-    Presensi(
-      nama: 'Siti Aminah',
-      tanggal: 'Senin, 30 Sep 2026',
-      status: 'Lewat',
-      jamMasuk: '08:24',
-      jamKeluar: '17:30',
-      lokasi: 'Kantor Pusat',
-    ),
-  ];
+class DaftarHadirPage extends StatefulWidget {
+  // Menerima data daftar hadir baru dari halaman register
+  final List<PresensiItem>? riwayatAwal;
 
-  // 🔹 FUNGSI CHECK IN OTOMATIS
-  static void checkIn(String namaKaryawan, {String lokasi = 'Kantor Pusat'}) {
-    final now = DateTime.now();
-    final jam =
-        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-    final tanggal = "${now.day}/${now.month}/${now.year}";
+  const DaftarHadirPage({super.key, this.riwayatAwal});
 
-    // Otomatis tentukan status (lewat batas jam 08:00 dianggap 'Lewat')
-    final status = (now.hour < 8 || (now.hour == 8 && now.minute == 0))
-        ? 'Tepat Waktu'
-        : 'Lewat';
+  @override
+  State<DaftarHadirPage> createState() => _DaftarHadirPageState();
+}
 
-    // Tambahkan data presensi baru ke urutan paling atas
-    daftarKehadiran.insert(
-      0,
-      Presensi(
-        nama: namaKaryawan,
-        tanggal: tanggal,
-        status: status,
-        jamMasuk: jam,
-        jamKeluar: '--:--',
-        lokasi: lokasi,
+class _DaftarHadirPageState extends State<DaftarHadirPage> {
+  late List<PresensiItem> riwayatHadir;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Data riwayat bawaan (contoh default)
+    final riwayatBawaan = [
+      PresensiItem(
+        nama: 'Budi Santoso',
+        tanggal: '01 Okt 2026',
+        jam: '08:00 WIB',
+        status: 'Hadir',
+      ),
+      PresensiItem(
+        nama: 'Siti Aminah',
+        tanggal: '30 Sep 2026',
+        jam: '08:05 WIB',
+        status: 'Hadir',
+      ),
+      PresensiItem(
+        nama: 'Rian Pratama',
+        tanggal: '29 Sep 2026',
+        jam: '08:15 WIB',
+        status: 'Terlambat',
+      ),
+    ];
+
+    // Jika ada kiriman data dari Register, masukkan ke paling atas
+    if (widget.riwayatAwal != null && widget.riwayatAwal!.isNotEmpty) {
+      riwayatHadir = [...widget.riwayatAwal!, ...riwayatBawaan];
+    } else {
+      riwayatHadir = riwayatBawaan;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text(
+          'Daftar Hadir',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+      ),
+      body: riwayatHadir.isEmpty
+          ? _buildEmptyState()
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: riwayatHadir.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final item = riwayatHadir[index];
+                return _buildPresensiCard(item);
+              },
+            ),
+    );
+  }
+
+  Widget _buildPresensiCard(PresensiItem item) {
+    final statusColor = item.isLate ? Colors.orange : Colors.teal;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            item.isLate ? Icons.alarm_off_rounded : Icons.check_circle_rounded,
+            color: statusColor,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          item.nama.isNotEmpty
+              ? '${item.nama} (${item.tanggal})'
+              : item.tanggal,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            'Waktu Masuk: ${item.jam}',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: statusColor.withOpacity(0.2)),
+          ),
+          child: Text(
+            item.status,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: statusColor.shade800,
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  // 🔹 FUNGSI CHECK OUT OTOMATIS
-  static void checkOut(String namaKaryawan) {
-    final now = DateTime.now();
-    final jam =
-        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-
-    // Cari riwayat masuk yang jam keluarnya masih kosong
-    try {
-      final item = daftarKehadiran.firstWhere(
-        (p) => p.nama == namaKaryawan && p.jamKeluar == '--:--',
-      );
-      item.jamKeluar = jam;
-    } catch (e) {
-      // Jika belum check-in hari ini atau sudah check-out
-    }
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.event_busy_rounded, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            'Belum ada riwayat kehadiran',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
+          ),
+        ],
+      ),
+    );
   }
 }

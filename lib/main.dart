@@ -1,10 +1,13 @@
 import 'package:alen_solution/model/presensi_model.dart';
+import 'package:alen_solution/pages/daftar_hadir_page.dart';
 import 'package:alen_solution/pages/home_pages.dart';
 import 'package:alen_solution/pages/login_pages.dart';
 
 import 'package:alen_solution/pages/register_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:alen_solution/model/presensi_model.dart';
+
+import 'login_pages.dart';
 
 void main() {
   runApp(const MyApp());

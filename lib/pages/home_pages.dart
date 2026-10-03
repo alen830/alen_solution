@@ -7,13 +7,17 @@ import 'login_pages.dart';
 import 'register_pages.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String namaPengguna;
+
+  const HomePage({super.key, this.namaPengguna = 'Pengguna'});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  final List<PresensiItem> _daftarPresensi = [];
+
   String _jamSekarang = '';
   String _tanggalSekarang = '';
   String? _jamMasuk;
@@ -74,6 +78,16 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _jamMasuk = timeStr;
       _statusHariIni = status;
+
+      _daftarPresensi.insert(
+        0,
+        PresensiItem(
+          nama: widget.namaPengguna,
+          tanggal: _tanggalSekarang,
+          jam: '$timeStr WIB',
+          status: status,
+        ),
+      );
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -90,6 +104,7 @@ class _HomePageState extends State<HomePage> {
     final now = DateTime.now();
     final timeStr =
         "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
     setState(() {
       _jamKeluar = timeStr;
     });
@@ -106,6 +121,7 @@ class _HomePageState extends State<HomePage> {
 
   void _tampilkanDialogKeterangan(String jenis) {
     final TextEditingController alasanController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -137,7 +153,6 @@ class _HomePageState extends State<HomePage> {
         actions: [
           TextButton(
             onPressed: () {
-              alasanController.dispose();
               Navigator.pop(ctx);
             },
             child: const Text('Batal'),
@@ -150,12 +165,29 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             onPressed: () {
-              final alasan = alasanController.text;
-              alasanController.dispose();
+              final alasan = alasanController.text.trim();
+              final now = DateTime.now();
+              final timeStr =
+                  "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
               Navigator.pop(ctx);
 
               setState(() {
                 _statusHariIni = jenis;
+
+                final namaDisplay = alasan.isNotEmpty
+                    ? '${widget.namaPengguna} ($alasan)'
+                    : widget.namaPengguna;
+
+                _daftarPresensi.insert(
+                  0,
+                  PresensiItem(
+                    nama: namaDisplay,
+                    tanggal: _tanggalSekarang,
+                    jam: '$timeStr WIB',
+                    status: jenis,
+                  ),
+                );
               });
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -176,6 +208,15 @@ class _HomePageState extends State<HomePage> {
             child: const Text('Kirim', style: TextStyle(color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _bukaDaftarHadir() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DaftarHadirPage(riwayatAwal: _daftarPresensi),
       ),
     );
   }
@@ -201,7 +242,6 @@ class _HomePageState extends State<HomePage> {
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              // Navigasi kembali ke LoginPage dan bersihkan riwayat stack halaman
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -270,14 +310,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.history_rounded, color: Colors.blueAccent),
             tooltip: 'Riwayat Kehadiran',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DaftarHadirPage(),
-                ),
-              );
-            },
+            onPressed: _bukaDaftarHadir,
           ),
           IconButton(
             icon: const Icon(
@@ -334,9 +367,9 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Halo, Pengguna!',
-                          style: TextStyle(
+                        Text(
+                          'Halo, ${widget.namaPengguna}!',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
@@ -533,7 +566,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 24),
 
-            // Bagian Pilihan Keterangan Presensi
+            // Pilihan Keterangan Presensi
             const Text(
               'Keterangan & Pengajuan',
               style: TextStyle(
@@ -559,7 +592,7 @@ class _HomePageState extends State<HomePage> {
                     icon: Icons.alarm_on_rounded,
                     label: 'Terlambat',
                     color: Colors.amber.shade800,
-                    onTap: () => _tampilkanDialogKeterangan('Izin Terlambat'),
+                    onTap: () => _tampilkanDialogKeterangan('Terlambat'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -574,10 +607,10 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _buildKeteranganItem(
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Cuti',
-                    color: Colors.purple,
-                    onTap: () => _tampilkanDialogKeterangan('Cuti'),
+                    icon: Icons.healing_rounded,
+                    label: 'Sakit',
+                    color: Colors.redAccent,
+                    onTap: () => _tampilkanDialogKeterangan('Sakit'),
                   ),
                 ),
               ],
@@ -636,16 +669,9 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 16),
 
-            // Tombol Navigasi ke Riwayat
+            // Navigasi ke Riwayat
             OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DaftarHadirPage(),
-                  ),
-                );
-              },
+              onPressed: _bukaDaftarHadir,
               icon: const Icon(
                 Icons.receipt_long_rounded,
                 color: Colors.blueAccent,
@@ -669,7 +695,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 14),
 
-            // Tombol Navigasi Tambahan ke Login / Register
+            // Navigasi ke Login & Buat Akun
             Row(
               children: [
                 Expanded(

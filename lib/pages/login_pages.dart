@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:alen_solution/service/simpan_token.dart';
 
 import 'home_pages.dart'; // Import halaman Home
 import 'register_pages.dart'; // Import halaman Register
@@ -23,11 +24,27 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // Fungsi untuk masuk ke Home Page
-  void _navigateToHome() {
+  void _navigateToHome() async {
+    final email = _emailController.text.trim();
+
+    // Mengambil username dari email (contoh: budi@gmail.com -> budi)
+    // Jika nanti API login sudah siap, ganti dengan nama dari response server
+    String namaUser = email.isNotEmpty && email.contains('@')
+        ? email.split('@')[0]
+        : (email.isNotEmpty ? email : 'Pengguna');
+
+    // Format huruf awal kapital (misal: "budi" -> "Budi")
+    namaUser = namaUser[0].toUpperCase() + namaUser.substring(1);
+
+    // Simpan ke local storage
+    await SimpanToken.saveNama(namaUser);
+
+    if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
-      (route) => false, // Menghapus riwayat auth agar tidak bisa back ke login
+      MaterialPageRoute(builder: (context) => HomePage(namaPengguna: namaUser)),
+      (route) => false,
     );
   }
 

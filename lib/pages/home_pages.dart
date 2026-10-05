@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:alen_solution/service/simpan_token.dart';
 import 'package:flutter/material.dart';
 
 import 'daftar_hadir_page.dart';
@@ -24,9 +25,12 @@ class _HomePageState extends State<HomePage> {
   String? _jamKeluar;
   String _statusHariIni = 'Belum Absen';
   late Timer _timer;
+  String _namaTampil = 'Pengguna';
 
   @override
   void initState() {
+    _namaTampil = widget.namaPengguna;
+    _muatNamaTersimpan();
     super.initState();
     _updateWaktu();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -38,6 +42,17 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+
+  Future<void> _muatNamaTersimpan() async {
+    if (_namaTampil == 'Pengguna') {
+      final savedNama = await SimpanToken.getNama();
+      if (savedNama != null && savedNama.isNotEmpty && mounted) {
+        setState(() {
+          _namaTampil = savedNama;
+        });
+      }
+    }
   }
 
   void _updateWaktu() {
@@ -345,7 +360,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -355,7 +370,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.blueAccent.withOpacity(0.15),
+                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.15),
                     child: const Icon(
                       Icons.person,
                       size: 32,
@@ -368,7 +383,7 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Halo, ${widget.namaPengguna}!',
+                          'Halo, $_namaTampil!',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

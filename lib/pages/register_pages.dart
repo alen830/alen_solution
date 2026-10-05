@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// 1. Import file login yang satu folder di lib/pages/
 import 'login_pages.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -15,7 +14,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -30,10 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-
-      // Simulasi proses registrasi / network call
       await Future.delayed(const Duration(seconds: 1));
-
       if (!mounted) return;
       setState(() => _isLoading = false);
 
@@ -54,13 +49,9 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       );
 
-      // 2. Berpindah ke Halaman Login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          // Pastikan nama class ini sama persis dengan yang ada di login_pages.dart
-          builder: (context) => const LoginPage(),
-        ),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     }
   }
@@ -77,12 +68,11 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header Logo / Icon
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent.withOpacity(0.1),
+                      color: Colors.blueAccent.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -93,8 +83,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Judul
                 const Center(
                   child: Text(
                     'Buat Akun Baru',
@@ -113,8 +101,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-
-                // Form Container
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -122,12 +108,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 20,
-                        offset: const Offset(
-                          0,
-                          10,
-                        ), // Menggunakan standar Offset Flutter
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
@@ -136,7 +119,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Nama Lengkap
                         _buildLabel('Nama Lengkap'),
                         TextFormField(
                           controller: _nameController,
@@ -150,8 +132,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               : null,
                         ),
                         const SizedBox(height: 18),
-
-                        // Email
                         _buildLabel('Email'),
                         TextFormField(
                           controller: _emailController,
@@ -173,8 +153,6 @@ class _RegisterPageState extends State<RegisterPage> {
                           },
                         ),
                         const SizedBox(height: 18),
-
-                        // Password
                         _buildLabel('Password'),
                         TextFormField(
                           controller: _passwordController,
@@ -200,8 +178,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               : null,
                         ),
                         const SizedBox(height: 28),
-
-                        // Tombol Submit
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -238,8 +214,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Link ke Halaman Login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -291,7 +265,6 @@ class _RegisterPageState extends State<RegisterPage> {
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
-    Widget? borderSide,
     Widget? suffixIcon,
   }) {
     return InputDecoration(

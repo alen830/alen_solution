@@ -28,39 +28,37 @@ class DaftarHadirPage extends StatefulWidget {
 }
 
 class _DaftarHadirPageState extends State<DaftarHadirPage> {
-  late List<PresensiItem> riwayatHadir;
+  // 1. Dibuat static agar tersimpan di memori dan tidak di-reset saat berpindah halaman
+  static List<PresensiItem> riwayatHadir = [
+    PresensiItem(
+      nama: 'Budi Santoso',
+      tanggal: '01 Okt 2026',
+      jam: '08:00 WIB',
+      status: 'Hadir',
+    ),
+    PresensiItem(
+      nama: 'Siti Aminah',
+      tanggal: '30 Sep 2026',
+      jam: '08:05 WIB',
+      status: 'Hadir',
+    ),
+    PresensiItem(
+      nama: 'Rian Pratama',
+      tanggal: '29 Sep 2026',
+      jam: '08:15 WIB',
+      status: 'Terlambat',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
 
-    // Data riwayat bawaan (contoh default)
-    final riwayatBawaan = [
-      PresensiItem(
-        nama: 'Budi Santoso',
-        tanggal: '01 Okt 2026',
-        jam: '08:00 WIB',
-        status: 'Hadir',
-      ),
-      PresensiItem(
-        nama: 'Siti Aminah',
-        tanggal: '30 Sep 2026',
-        jam: '08:05 WIB',
-        status: 'Hadir',
-      ),
-      PresensiItem(
-        nama: 'Rian Pratama',
-        tanggal: '29 Sep 2026',
-        jam: '08:15 WIB',
-        status: 'Terlambat',
-      ),
-    ];
-
-    // Jika ada kiriman data dari Register, masukkan ke paling atas
+    // 2. Tambahkan data kiriman baru ke paling atas tanpa menghapus data sebelumnya
     if (widget.riwayatAwal != null && widget.riwayatAwal!.isNotEmpty) {
-      riwayatHadir = [...widget.riwayatAwal!, ...riwayatBawaan];
-    } else {
-      riwayatHadir = riwayatBawaan;
+      for (var item in widget.riwayatAwal!.reversed) {
+        riwayatHadir.insert(0, item);
+      }
     }
   }
 
@@ -142,9 +140,9 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.1),
+            color: statusColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: statusColor.withValues(alpha: 0.2)),
+            border: Border.all(color: statusColor.withOpacity(0.2)),
           ),
           child: Text(
             item.status,

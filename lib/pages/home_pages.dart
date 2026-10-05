@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'daftar_hadir_page.dart';
 import 'login_pages.dart';
+import 'maps_page.dart';
 import 'register_pages.dart';
 
 class HomePage extends StatefulWidget {
@@ -322,6 +323,16 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.map_rounded, color: Colors.teal),
+            tooltip: 'Peta Presensi',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MapsPage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.history_rounded, color: Colors.blueAccent),
             tooltip: 'Riwayat Kehadiran',
@@ -702,6 +713,37 @@ class _HomePageState extends State<HomePage> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 side: const BorderSide(color: Colors.blueAccent, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Tombol Buka Peta Presensi
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MapsPage()),
+                );
+              },
+              icon: const Icon(
+                Icons.location_on_rounded,
+                color: Colors.teal,
+              ),
+              label: const Text(
+                'Buka Peta & Cek Lokasi Presensi',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.teal,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                side: const BorderSide(color: Colors.teal, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

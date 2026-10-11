@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'daftar_hadir_page.dart';
 import 'login_pages.dart';
@@ -24,6 +25,18 @@ class _HomePageState extends State<HomePage> {
   String? _jamKeluar;
   String _statusHariIni = 'Belum Absen';
   late Timer _timer;
+
+  // Konfigurasi Google Maps
+  late GoogleMapController _mapController;
+  static const LatLng _lokasiTujuan = LatLng(-6.200000, 106.816666);
+
+  final Set<Marker> _markers = {
+    const Marker(
+      markerId: MarkerId('lokasi_absen'),
+      position: _lokasiTujuan,
+      infoWindow: InfoWindow(title: 'Lokasi Kantor / PPKD'),
+    ),
+  };
 
   @override
   void initState() {
@@ -458,6 +471,45 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Widget Google Maps
+            const Text(
+              'Titik Lokasi Presensi',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: GoogleMap(
+                initialCameraPosition: const CameraPosition(
+                  target: _lokasiTujuan,
+                  zoom: 15.0,
+                ),
+                markers: _markers,
+                myLocationEnabled: false,
+                zoomControlsEnabled: false,
+                onMapCreated: (GoogleMapController controller) {
+                  _mapController = controller;
+                },
               ),
             ),
 

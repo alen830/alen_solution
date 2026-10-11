@@ -14,11 +14,13 @@ class PresensiItem {
     required this.status,
   });
 
+  bool get isHadir => status.toLowerCase() == 'hadir';
   bool get isLate => status.toLowerCase() == 'terlambat';
+  bool get isSakit => status.toLowerCase() == 'sakit';
+  bool get isIzin => status.toLowerCase() == 'izin';
 }
 
 class DaftarHadirPage extends StatefulWidget {
-  // Menerima data daftar hadir baru dari halaman register
   final List<PresensiItem>? riwayatAwal;
 
   const DaftarHadirPage({super.key, this.riwayatAwal});
@@ -28,8 +30,8 @@ class DaftarHadirPage extends StatefulWidget {
 }
 
 class _DaftarHadirPageState extends State<DaftarHadirPage> {
-  // 1. Dibuat static agar tersimpan di memori dan tidak di-reset saat berpindah halaman
-  static List<PresensiItem> riwayatHadir = [
+  // Data bawaan awal
+  static final List<PresensiItem> _dataAwal = [
     PresensiItem(
       nama: 'Budi Santoso',
       tanggal: '01 Okt 2026',
@@ -50,16 +52,54 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
     ),
   ];
 
+  // List aktif yang ditampilkan
+  static List<PresensiItem> riwayatHadir = List.from(_dataAwal);
+
   @override
   void initState() {
     super.initState();
 
-    // 2. Tambahkan data kiriman baru ke paling atas tanpa menghapus data sebelumnya
     if (widget.riwayatAwal != null && widget.riwayatAwal!.isNotEmpty) {
       for (var item in widget.riwayatAwal!.reversed) {
-        riwayatHadir.insert(0, item);
+        // Bersihkan tanda kurung keterangan (misal: "Nino (flu)" menjadi "nino")
+        final namaItemBersih = item.nama.split('(').first.trim().toLowerCase();
+
+        // Cek apakah user sudah tercatat di tanggal yang sama
+        final indexAda = riwayatHadir.indexWhere((data) {
+          final namaDataBersih = data.nama
+              .split('(')
+              .first
+              .trim()
+              .toLowerCase();
+          return namaDataBersih == namaItemBersih &&
+              data.tanggal == item.tanggal;
+        });
+
+        if (indexAda != -1) {
+          // Ganti data lama dengan status terbaru (sakit/izin)
+          riwayatHadir[indexAda] = item;
+        } else {
+          // Masukkan sebagai data baru jika belum ada di tanggal tersebut
+          riwayatHadir.insert(0, item);
+        }
       }
     }
+  }
+
+  // Helper warna badge & ikon berdasarkan status
+  Color _getStatusColor(PresensiItem item) {
+    if (item.isLate) return Colors.orange;
+    if (item.isSakit) return Colors.redAccent;
+    if (item.isIzin) return Colors.blueGrey;
+    return Colors.teal;
+  }
+
+  // Helper ikon sesuai status
+  IconData _getStatusIcon(PresensiItem item) {
+    if (item.isLate) return Icons.alarm_off_rounded;
+    if (item.isSakit) return Icons.healing_rounded;
+    if (item.isIzin) return Icons.assignment_late_rounded;
+    return Icons.check_circle_rounded;
   }
 
   @override
@@ -91,7 +131,11 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
   }
 
   Widget _buildPresensiCard(PresensiItem item) {
-    final statusColor = item.isLate ? Colors.orange : Colors.teal;
+    final statusColor = _getStatusColor(item);
+
+    final subtitleText = (item.isHadir || item.isLate)
+        ? 'Waktu Masuk: ${item.jam}'
+        : 'Keterangan: Tidak Masuk (${item.status})';
 
     return Container(
       decoration: BoxDecoration(
@@ -114,11 +158,7 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
             color: statusColor.withOpacity(0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            item.isLate ? Icons.alarm_off_rounded : Icons.check_circle_rounded,
-            color: statusColor,
-            size: 24,
-          ),
+          child: Icon(_getStatusIcon(item), color: statusColor, size: 24),
         ),
         title: Text(
           item.nama.isNotEmpty
@@ -133,8 +173,16 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
-            'Waktu Masuk: ${item.jam}',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            subtitleText,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: (item.isHadir || item.isLate)
+                  ? FontWeight.normal
+                  : FontWeight.w500,
+              color: (item.isHadir || item.isLate)
+                  ? Colors.grey.shade600
+                  : statusColor,
+            ),
           ),
         ),
         trailing: Container(
@@ -149,7 +197,7 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: statusColor.shade800,
+              color: statusColor,
             ),
           ),
         ),

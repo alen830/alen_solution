@@ -2,17 +2,43 @@
 import 'package:flutter/material.dart';
 
 class PresensiModel {
+  final String nama;
   final String tanggal;
-  final String jam;
+  final String? jamMasuk;
+  final String? jamKeluar;
   final String status;
   final String? catatan;
 
   const PresensiModel({
+    required this.nama,
     required this.tanggal,
-    required this.jam,
+    this.jamMasuk,
+    this.jamKeluar,
     required this.status,
     this.catatan,
   });
+
+  // Getter pembantu jika ingin mengecek apakah sudah checkout / pulang
+  bool get sudahKeluar => jamKeluar != null && jamKeluar!.isNotEmpty;
+
+  // Method copyWith untuk mempermudah update jamKeluar saat user checkout
+  PresensiModel copyWith({
+    String? nama,
+    String? tanggal,
+    String? jamMasuk,
+    String? jamKeluar,
+    String? status,
+    String? catatan,
+  }) {
+    return PresensiModel(
+      nama: nama ?? this.nama,
+      tanggal: tanggal ?? this.tanggal,
+      jamMasuk: jamMasuk ?? this.jamMasuk,
+      jamKeluar: jamKeluar ?? this.jamKeluar,
+      status: status ?? this.status,
+      catatan: catatan ?? this.catatan,
+    );
+  }
 }
 
 class StatusConfig {

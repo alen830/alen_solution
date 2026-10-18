@@ -1,3 +1,4 @@
+import 'package:alen_solution/pages/daftar_hadir_page.dart';
 import 'package:flutter/material.dart';
 import 'package:alen_solution/pages/register_pages.dart';
 

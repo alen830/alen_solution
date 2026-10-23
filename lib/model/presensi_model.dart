@@ -18,10 +18,36 @@ class PresensiModel {
     this.catatan,
   });
 
-  // Getter pembantu jika ingin mengecek apakah sudah checkout / pulang
-  bool get sudahKeluar => jamKeluar != null && jamKeluar!.isNotEmpty;
+  // Getter pembantu untuk mengecek apakah user sudah absen pulang
+  bool get sudahKeluar => jamKeluar != null && jamKeluar!.trim().isNotEmpty;
 
-  // Method copyWith untuk mempermudah update jamKeluar saat user checkout
+  // Konversi dari JSON (API / Database lokal) ke Object Dart
+  factory PresensiModel.fromJson(Map<String, dynamic> json) {
+    return PresensiModel(
+      nama: json['nama'] ?? '-',
+      tanggal: json['tanggal'] ?? '-',
+      // Membaca 'jam_masuk' atau 'waktu_masuk' sesuai respon backend
+      jamMasuk: json['jam_masuk'] ?? json['waktu_masuk'],
+      // Membaca 'jam_keluar' atau 'waktu_keluar' sesuai respon backend
+      jamKeluar: json['jam_keluar'] ?? json['waktu_keluar'],
+      status: json['status'] ?? 'Hadir',
+      catatan: json['catatan'] ?? json['keterangan'],
+    );
+  }
+
+  // Konversi dari Object Dart ke Map/JSON untuk dikirim ke API
+  Map<String, dynamic> toJson() {
+    return {
+      'nama': nama,
+      'tanggal': tanggal,
+      'jam_masuk': jamMasuk,
+      'jam_keluar': jamKeluar,
+      'status': status,
+      'catatan': catatan,
+    };
+  }
+
+  // Method copyWith untuk mempermudah update jamKeluar saat checkout
   PresensiModel copyWith({
     String? nama,
     String? tanggal,

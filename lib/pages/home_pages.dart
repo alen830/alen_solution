@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 import 'daftar_hadir_page.dart';
 import 'login_pages.dart';
@@ -114,17 +115,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _absenKeluar() {
-    final now = DateTime.now();
-    final timeStr =
-        "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    // Format menggunakan package intl
+    final String waktuKeluarSekarang =
+        "${DateFormat('HH:mm').format(DateTime.now())} WIB";
 
     setState(() {
-      _jamKeluar = timeStr;
+      _jamKeluar = waktuKeluarSekarang;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Berhasil Absen Keluar pada jam $timeStr WIB'),
+        content: Text('Berhasil Absen Keluar pada jam $waktuKeluarSekarang'),
         backgroundColor: Colors.orange.shade800,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

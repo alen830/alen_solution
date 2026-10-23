@@ -4,14 +4,18 @@ import 'package:flutter/material.dart';
 class PresensiItem {
   final String nama;
   final String tanggal;
-  final String jam;
+  final String? waktuMasuk;
+  final String? waktuKeluar;
   final String status;
+  final String? jam;
 
   PresensiItem({
     this.nama = '',
     required this.tanggal,
-    required this.jam,
+    this.waktuMasuk,
+    this.waktuKeluar,
     required this.status,
+    this.jam,
   });
 
   bool get isHadir => status.toLowerCase() == 'hadir';
@@ -19,6 +23,31 @@ class PresensiItem {
   bool get isSakit => status.toLowerCase() == 'sakit';
   bool get isIzin => status.toLowerCase() == 'izin';
 }
+
+// Simpan data di level file agar tidak hilang saat halaman di-pop atau di-reopen
+List<PresensiItem> riwayatGlobal = [
+  PresensiItem(
+    nama: 'Budi Santoso',
+    tanggal: '01 Okt 2026',
+    waktuMasuk: '08:00 WIB',
+    waktuKeluar: '17:00 WIB',
+    status: 'Hadir',
+  ),
+  PresensiItem(
+    nama: 'Siti Aminah',
+    tanggal: '30 Sep 2026',
+    waktuMasuk: '08:05 WIB',
+    waktuKeluar: null,
+    status: 'Hadir',
+  ),
+  PresensiItem(
+    nama: 'Rian Pratama',
+    tanggal: '29 Sep 2026',
+    waktuMasuk: '08:15 WIB',
+    waktuKeluar: '17:10 WIB',
+    status: 'Terlambat',
+  ),
+];
 
 class DaftarHadirPage extends StatefulWidget {
   final List<PresensiItem>? riwayatAwal;
@@ -30,42 +59,16 @@ class DaftarHadirPage extends StatefulWidget {
 }
 
 class _DaftarHadirPageState extends State<DaftarHadirPage> {
-  // Data bawaan awal
-  static final List<PresensiItem> _dataAwal = [
-    PresensiItem(
-      nama: 'Budi Santoso',
-      tanggal: '01 Okt 2026',
-      jam: '08:00 WIB',
-      status: 'Hadir',
-    ),
-    PresensiItem(
-      nama: 'Siti Aminah',
-      tanggal: '30 Sep 2026',
-      jam: '08:05 WIB',
-      status: 'Hadir',
-    ),
-    PresensiItem(
-      nama: 'Rian Pratama',
-      tanggal: '29 Sep 2026',
-      jam: '08:15 WIB',
-      status: 'Terlambat',
-    ),
-  ];
-
-  // List aktif yang ditampilkan
-  static List<PresensiItem> riwayatHadir = List.from(_dataAwal);
-
   @override
   void initState() {
     super.initState();
 
+    // Menggabungkan data baru yang dikirim dari halaman input
     if (widget.riwayatAwal != null && widget.riwayatAwal!.isNotEmpty) {
       for (var item in widget.riwayatAwal!.reversed) {
-        // Bersihkan tanda kurung keterangan (misal: "Nino (flu)" menjadi "nino")
         final namaItemBersih = item.nama.split('(').first.trim().toLowerCase();
 
-        // Cek apakah user sudah tercatat di tanggal yang sama
-        final indexAda = riwayatHadir.indexWhere((data) {
+        final indexAda = riwayatGlobal.indexWhere((data) {
           final namaDataBersih = data.nama
               .split('(')
               .first
@@ -76,17 +79,14 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         });
 
         if (indexAda != -1) {
-          // Ganti data lama dengan status terbaru (sakit/izin)
-          riwayatHadir[indexAda] = item;
+          riwayatGlobal[indexAda] = item;
         } else {
-          // Masukkan sebagai data baru jika belum ada di tanggal tersebut
-          riwayatHadir.insert(0, item);
+          riwayatGlobal.insert(0, item);
         }
       }
     }
   }
 
-  // Helper warna badge & ikon berdasarkan status
   Color _getStatusColor(PresensiItem item) {
     if (item.isLate) return Colors.orange;
     if (item.isSakit) return Colors.redAccent;
@@ -94,7 +94,6 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
     return Colors.teal;
   }
 
-  // Helper ikon sesuai status
   IconData _getStatusIcon(PresensiItem item) {
     if (item.isLate) return Icons.alarm_off_rounded;
     if (item.isSakit) return Icons.healing_rounded;
@@ -116,14 +115,14 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
       ),
-      body: riwayatHadir.isEmpty
+      body: riwayatGlobal.isEmpty
           ? _buildEmptyState()
           : ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: riwayatHadir.length,
+              itemCount: riwayatGlobal.length,
               separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-                final item = riwayatHadir[index];
+                final item = riwayatGlobal[index];
                 return _buildPresensiCard(item);
               },
             ),
@@ -132,10 +131,10 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
 
   Widget _buildPresensiCard(PresensiItem item) {
     final statusColor = _getStatusColor(item);
-
-    final subtitleText = (item.isHadir || item.isLate)
-        ? 'Waktu Masuk: ${item.jam}'
-        : 'Keterangan: Tidak Masuk (${item.status})';
+    final hasJamMasuk =
+        item.waktuMasuk != null && item.waktuMasuk!.trim().isNotEmpty;
+    final hasJamKeluar =
+        item.waktuKeluar != null && item.waktuKeluar!.trim().isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -172,17 +171,37 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            subtitleText,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: (item.isHadir || item.isLate)
-                  ? FontWeight.normal
-                  : FontWeight.w500,
-              color: (item.isHadir || item.isLate)
-                  ? Colors.grey.shade600
-                  : statusColor,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Jam masuk tetap ditampilkan jika ada nilainya
+              if (hasJamMasuk)
+                Text(
+                  "Waktu Masuk: ${item.waktuMasuk}",
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                ),
+              // Jam keluar ditampilkan, atau status "Belum Absen Keluar" bila statusnya Hadir/Terlambat
+              if (item.isHadir || item.isLate || hasJamKeluar) ...[
+                const SizedBox(height: 2),
+                Text(
+                  "Waktu Keluar: ${hasJamKeluar ? item.waktuKeluar! : 'Belum Absen Keluar'}",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+              // Jika status Sakit / Izin dan tidak ada data jam sama sekali
+              if (!item.isHadir &&
+                  !item.isLate &&
+                  !hasJamMasuk &&
+                  !hasJamKeluar)
+                Text(
+                  'Keterangan: Tidak Masuk (${item.status})',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: statusColor,
+                  ),
+                ),
+            ],
           ),
         ),
         trailing: Container(

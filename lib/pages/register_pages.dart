@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login_pages.dart';
+
+import 'package:alen_solution/pages/login_pages.dart';
+import 'package:alen_solution/pages/register_pages.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -28,6 +32,12 @@ class _RegisterPageState extends State<RegisterPage> {
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+
+      // Simpan nama dan email ke SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('nama', _nameController.text.trim());
+      await prefs.setString('email', _emailController.text.trim());
+
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       setState(() => _isLoading = false);

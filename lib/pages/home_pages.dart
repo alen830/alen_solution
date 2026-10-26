@@ -1,10 +1,14 @@
+// lib/pages/home_pages.dart
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 
+// Pastikan path ini sesuai dengan struktur folder proyek Anda
+import '../model/presensi_model.dart';
 import 'daftar_hadir_page.dart';
+import 'input_absen_page.dart';
 import 'login_pages.dart';
 import 'register_pages.dart';
 
@@ -73,6 +77,8 @@ class _HomePageState extends State<HomePage> {
       'November',
       'Desember',
     ];
+
+    // Format tanggal yang sudah diperbaiki
     final tanggalFormatted =
         "${now.day} ${namaBulan[now.month - 1]} ${now.year}";
 
@@ -115,7 +121,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _absenKeluar() {
-    // Format menggunakan package intl
     final String waktuKeluarSekarang =
         "${DateFormat('HH:mm').format(DateTime.now())} WIB";
 
@@ -131,6 +136,46 @@ class _HomePageState extends State<HomePage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+  }
+
+  Future<void> _bukaFormAbsen() async {
+    final hasil = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const InputAbsenPage()),
+    );
+
+    if (hasil != null && mounted) {
+      final now = DateTime.now();
+      final timeStr =
+          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+      final String namaInput = hasil['nama'] ?? widget.namaPengguna;
+      final String statusInput = hasil['status'] ?? 'Hadir';
+
+      setState(() {
+        _statusHariIni = statusInput;
+        _jamMasuk = timeStr;
+        _daftarPresensi.insert(
+          0,
+          PresensiItem(
+            nama: namaInput,
+            tanggal: _tanggalSekarang,
+            jam: '$timeStr WIB',
+            status: statusInput,
+          ),
+        );
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Absen berhasil disimpan: $namaInput ($statusInput)'),
+          backgroundColor: Colors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
   }
 
   void _tampilkanDialogKeterangan(String jenis) {
@@ -166,9 +211,7 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-            },
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Batal'),
           ),
           ElevatedButton(
@@ -477,7 +520,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 20),
 
-            // Widget Google Maps
+            // Titik Lokasi Presensi (Google Maps)
             const Text(
               'Titik Lokasi Presensi',
               style: TextStyle(
@@ -516,7 +559,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 20),
 
-            // Status Jam Masuk & Keluar
+            // Jam Masuk & Jam Keluar
             Row(
               children: [
                 Expanded(
@@ -619,7 +662,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 24),
 
-            // Pilihan Keterangan Presensi
+            // Keterangan & Pengajuan Presensi
             const Text(
               'Keterangan & Pengajuan',
               style: TextStyle(
@@ -720,7 +763,34 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // Tombol Buka Form Absen Manual (InputAbsenPage)
+            ElevatedButton.icon(
+              onPressed: _bukaFormAbsen,
+              icon: const Icon(
+                Icons.edit_calendar_rounded,
+                color: Colors.white,
+              ),
+              label: const Text(
+                'Buka Form Absen Manual',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigoAccent,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+
+            const SizedBox(height: 12),
 
             // Navigasi ke Riwayat
             OutlinedButton.icon(

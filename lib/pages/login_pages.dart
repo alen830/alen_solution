@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:alen_solution/service/simpan_token.dart';
 
-import 'home_pages.dart'; // Import halaman Home
-import 'register_pages.dart'; // Import halaman Register
+import 'home_pages.dart';
+
+import 'package:alen_solution/pages/register_pages.dart'; // Import halaman Register
+import 'package:alen_solution/pages/login_pages.dart';
+import 'package:alen_solution/pages/register_pages.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,20 +26,16 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // Fungsi untuk masuk ke Home Page
+  // Masuk ke Home Page
   void _navigateToHome() async {
     final email = _emailController.text.trim();
 
-    // Mengambil username dari email (contoh: budi@gmail.com -> budi)
-    // Jika nanti API login sudah siap, ganti dengan nama dari response server
     String namaUser = email.isNotEmpty && email.contains('@')
         ? email.split('@')[0]
         : (email.isNotEmpty ? email : 'Pengguna');
 
-    // Format huruf awal kapital (misal: "budi" -> "Budi")
     namaUser = namaUser[0].toUpperCase() + namaUser.substring(1);
 
-    // Simpan ke local storage
     await SimpanToken.saveNama(namaUser);
 
     if (!mounted) return;
@@ -48,11 +47,14 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Fungsi untuk kembali / beralih ke Register Page
+  // Beralih ke Register Page
   void _navigateToRegister() {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
+      MaterialPageRoute(
+        // Catatan: Jika nama class di register_pages.dart adalah RegisterPages, ubah menjadi const RegisterPages()
+        builder: (context) => const RegisterPage(),
+      ),
     );
   }
 
@@ -148,15 +150,12 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Tombol Masuk -> Pindah ke HomePage
+                // Tombol Masuk
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Integrasikan pemanggilan API login di sini jika sudah siap
-                      _navigateToHome();
-                    },
+                    onPressed: _navigateToHome,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       shape: RoundedRectangleBorder(
@@ -176,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Link ke Register Page
+                // Navigasi ke Register
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

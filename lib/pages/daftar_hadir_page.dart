@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// Model data kehadiran
+// Model data kehadiran (dilengkapi agar mendukung field keterangan & jam)
 class PresensiItem {
   final String nama;
   final String tanggal;
@@ -8,6 +8,7 @@ class PresensiItem {
   final String? waktuKeluar;
   final String status;
   final String? jam;
+  final String? keterangan;
 
   PresensiItem({
     this.nama = '',
@@ -16,6 +17,7 @@ class PresensiItem {
     this.waktuKeluar,
     required this.status,
     this.jam,
+    this.keterangan,
   });
 
   bool get isHadir => status.toLowerCase() == 'hadir';
@@ -24,7 +26,7 @@ class PresensiItem {
   bool get isIzin => status.toLowerCase() == 'izin';
 }
 
-// Simpan data di level file agar tidak hilang saat halaman di-pop atau di-reopen
+// Data tersimpan di level memori global
 List<PresensiItem> riwayatGlobal = [
   PresensiItem(
     nama: 'Budi Santoso',
@@ -46,6 +48,13 @@ List<PresensiItem> riwayatGlobal = [
     waktuMasuk: '08:15 WIB',
     waktuKeluar: '17:10 WIB',
     status: 'Terlambat',
+    keterangan: 'Macet di jalan tol',
+  ),
+  PresensiItem(
+    nama: 'Dewi Lestari',
+    tanggal: '28 Sep 2026',
+    status: 'Izin',
+    keterangan: 'Keperluan keluarga mendesak',
   ),
 ];
 
@@ -63,7 +72,6 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
   void initState() {
     super.initState();
 
-    // Menggabungkan data baru yang dikirim dari halaman input
     if (widget.riwayatAwal != null && widget.riwayatAwal!.isNotEmpty) {
       for (var item in widget.riwayatAwal!.reversed) {
         final namaItemBersih = item.nama.split('(').first.trim().toLowerCase();
@@ -135,6 +143,8 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         item.waktuMasuk != null && item.waktuMasuk!.trim().isNotEmpty;
     final hasJamKeluar =
         item.waktuKeluar != null && item.waktuKeluar!.trim().isNotEmpty;
+    final hasKeterangan =
+        item.keterangan != null && item.keterangan!.trim().isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -174,13 +184,11 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Jam masuk tetap ditampilkan jika ada nilainya
               if (hasJamMasuk)
                 Text(
                   "Waktu Masuk: ${item.waktuMasuk}",
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 ),
-              // Jam keluar ditampilkan, atau status "Belum Absen Keluar" bila statusnya Hadir/Terlambat
               if (item.isHadir || item.isLate || hasJamKeluar) ...[
                 const SizedBox(height: 2),
                 Text(
@@ -188,19 +196,27 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
-              // Jika status Sakit / Izin dan tidak ada data jam sama sekali
-              if (!item.isHadir &&
-                  !item.isLate &&
-                  !hasJamMasuk &&
-                  !hasJamKeluar)
+              if (hasKeterangan) ...[
+                const SizedBox(height: 3),
                 Text(
-                  'Keterangan: Tidak Masuk (${item.status})',
+                  "Keterangan: ${item.keterangan}",
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: statusColor,
                   ),
                 ),
+              ] else if (item.isSakit || item.isIzin) ...[
+                const SizedBox(height: 2),
+                Text(
+                  "Keterangan: Tidak Masuk (${item.status})",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: statusColor,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
